@@ -1,0 +1,66 @@
+---
+title: "aclu_incidentreport"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+report <- read_csv('../Downloads/download.csv')
+report <- as_tibble(report)
+```
+
+```{r}
+#District 
+districts <- unique(report$district_name)
+shooting_bydistrict <- list()
+df1 <- data.frame(nrow = length(d),ncol = 3)
+
+i=1
+
+for (d in districts) {
+   stats = filter(report, district_name == d)
+   shooting = stats %>% select(shooting)
+   df1[i,3] <- nrow(shooting %>% filter(shooting == TRUE))
+   df1[i,2] <- nrow(shooting)
+   df1[i, 1] <- d
+   i = i+1
+}
+
+colnames(df1) <- c("District", "Number of Incidents", "Number of Shootings")
+```
+
+```{r}
+library(lubridate)
+library(nycflights13)
+
+dates <- report %>% select(occurred_on_date)
+dates <- as.Date(dates$occurred_on_date)
+uniq_date <- unique(dates)
+report_date <- select(report, -occurred_on_date)
+report_date$date <- dates
+
+incident_by_day <- report_date %>% group_by(date) %>% summarize(n())
+```
+```{r}
+#number of each offense 
+num_offenses <- report %>% group_by(offenses) %>% summarize(n())
+
+#offense by district (>1000 incidents)
+off_by_dist <- report %>% group_by(district_name, offenses) %>% summarize(n())
+dorchester <- off_by_dist %>% filter(district_name == "Dorchester")
+mattapan <- off_by_dist %>% filter(district_name == "Mattapan")
+roxbury <- off_by_dist %>% filter(district_name == "Roxbury" )
+southend <- off_by_dist %>% filter(district_name == "South End")
+
+#district counts for type of assault 
+agg_assault <- report %>% group_by(offenses, district_name) %>% summarize(n()) %>% filter(offenses == "ASSAULT - AGGRAVATED")
+simple_assault <- report %>% group_by(offenses, district_name) %>% summarize(n()) %>% filter(offenses == "ASSAULT - SIMPLE")
+ 
+```
+
+```{r}
+#number of incidents by street
+bystreet <- report %>% group_by(street) %>% summarize(count = n())
+```
+
